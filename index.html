@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Chronicle Scroll</title>
+
+<style>
+
+body{
+    background:#111;
+    height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    font-family:serif;
+    overflow:hidden;
+}
+
+/* СВИТОК */
+.scroll{
+    position:relative;
+    cursor:pointer;
+	z-index: 10;
+position: relative;
+}
+
+.scroll img{
+    width:320px;
+    transition:transform 0.2s;
+}
+
+/* hover текст */
+.overlay{
+    position:absolute;
+    bottom:-40px;
+    width:100%;
+    text-align:center;
+    color:#ccc;
+    opacity:0;
+    transition:0.4s;
+    font-size:18px;
+}
+
+.scroll:hover .overlay{
+    opacity:1;
+}
+
+/* ЩЕЛБАН */
+.jiggle{
+    animation:jiggle 0.6s ease;
+}
+
+@keyframes jiggle{
+0%{transform:rotate(0deg);}
+25%{transform:rotate(4deg);}
+50%{transform:rotate(-3deg);}
+75%{transform:rotate(2deg);}
+100%{transform:rotate(0deg);}
+}
+
+/* ПЕРГАМЕНТ */
+.parchment{
+    position:absolute;
+    top:180px;
+    width:300px;
+    padding:20px;
+    border-radius:6px;
+
+    background:transparent; /* ← главное */
+    box-shadow:none;
+
+    opacity:0;
+    height:0;
+    overflow:hidden;
+    transition:all 0.8s ease;
+
+}
+
+.parchment.open{
+    opacity:1;
+    height:220px;
+}
+
+/* ТЕКСТ */
+.text{
+    opacity:1;
+    transition:opacity 0.6s;
+
+    color:#ff9d2f;
+    text-align:center;
+    font-size:20px;
+    line-height:1.5;
+
+    text-shadow:
+        0 0 6px rgba(255,140,0,0.8),
+        0 0 14px rgba(255,120,0,0.6);
+}
+
+/* ДЫМ */
+.smoke{
+    position:absolute;
+    width:220px;
+    left:50%;
+    top:-40px;
+
+    transform:translateX(-50%);
+    pointer-events:none;
+
+    opacity:0.25;
+    filter:blur(6px);
+
+    animation:smokeFloat 8s infinite ease-in-out;
+}
+
+/* движение дыма */
+@keyframes smokeFloat{
+    0%{
+        transform:translate(-50%,0px) scale(1);
+        opacity:0.15;
+    }
+
+    50%{
+        transform:translate(-50%,-25px) scale(1.1);
+        opacity:0.35;
+    }
+
+    100%{
+        transform:translate(-50%,0px) scale(1);
+        opacity:0.15;
+    }
+}
+
+.scroll.active .smoke{
+    animation-duration:3s;
+    opacity:0.6;
+}
+
+/* РУНА */
+.rune{
+    position:absolute;
+    width:90px;
+    left:50%;
+    top:-5px;
+    transform:translateX(-50%);
+    pointer-events:none;
+    animation:runePulse 4s ease-in-out infinite;
+}
+
+@keyframes runePulse{
+0%{
+    filter:drop-shadow(0 0 6px orange)
+           drop-shadow(0 0 12px orange);
+    opacity:0.7;
+}
+50%{
+    filter:drop-shadow(0 0 18px orange)
+           drop-shadow(0 0 35px orange);
+    opacity:1;
+}
+100%{
+    filter:drop-shadow(0 0 6px orange)
+           drop-shadow(0 0 12px orange);
+    opacity:0.7;
+}
+}
+
+.scroll.active .rune{
+    animation:runeBurst 0.6s ease;
+}
+
+@keyframes runeBurst{
+0%{
+transform:translateX(-50%) scale(1);
+filter:drop-shadow(0 0 10px orange);
+}
+50%{
+transform:translateX(-50%) scale(1.25);
+filter:drop-shadow(0 0 35px orange)
+       drop-shadow(0 0 70px orange);
+}
+100%{
+transform:translateX(-50%) scale(1);
+}
+}
+
+/* режим чтения */
+.scroll.reading{
+position:fixed;
+left:40px;
+bottom:40px;
+transform:scale(0.6);
+transition:all 0.8s ease;
+z-index: 10;
+}
+
+/* фон */
+.lore-bg{
+position:fixed;
+inset:0;
+
+background:
+linear-gradient(rgba(0,0,0,0.65), rgba(0,0,0,0.75)),
+url("bg.jpg") center/cover;
+
+opacity:0;
+pointer-events:none;
+transition:opacity 1s ease;
+}
+
+.lore-bg.show{
+opacity:1;
+z-index: 1;
+}
+
+/* текст */
+.lore-text{
+position:fixed;
+top:50%;
+left:50%;
+transform:translate(-50%,-50%);
+width:700px;
+color:#ff9d2f;
+font-size:22px;
+line-height:1.7;
+text-align:center;
+opacity:0;
+transition:opacity 1s;
+font-family:"Grenze Gotisch", serif;
+letter-spacing:1px;
+z-index: 3;
+}
+
+.lore-text.show{
+opacity:1;
+}
+
+.lore-image{
+position:fixed;
+top:50px;
+left:50%;
+transform:translateX(-50%);
+z-index:2;
+
+max-width:60vw;
+pointer-events:none;
+
+opacity:0;
+transition:opacity 1s ease;
+}
+
+.lore-image img{
+width:100%;
+height:auto;
+border-radius:8px;
+
+box-shadow:
+0 0 40px rgba(0,0,0,0.8),
+0 0 25px rgba(255,140,0,0.2);
+}
+
+.lore-image.show{
+opacity:1;
+z-index: 0;
+}
+
+
+
+
+}
+
+</style>
+</head>
+
+<body>
+
+<link href="https://fonts.googleapis.com/css2?family=Grenze+Gotisch:wght@400;600&display=swap" rel="stylesheet">
+
+
+<div class="scroll" onclick="nextPage()" id="scroll">
+
+    <!-- ВСТАВЬ СЮДА СВОЙ СВИТОК -->
+    <img src="scroll.png"> 
+	<img src="rune.png" class="rune">
+	<img src="smoke.png" class="smoke">
+    <div class="overlay">
+        Продолжить...
+    </div>
+
+    <div class="parchment" id="paper">
+        <div class="text" id="text"></div>
+    </div>
+
+</div>
+
+<div class="lore-bg" id="lore"></div>
+<div class="lore-image">
+    <img id="loreImage" src="scene.jpg">
+</div>
+<div class="lore-text" id="loreText"></div>
+
+<audio id="soundOpen" src="open.wav"></audio>
+<audio id="soundPage" src="page.wav"></audio>
+<audio id="soundWrite" src="writing.wav"></audio>
+<audio id="bgMusic" src="music.mp4" loop></audio>
+
+
+<script>
+
+const soundOpen = document.getElementById("soundOpen");
+const soundPage = document.getElementById("soundPage");
+const soundWrite = document.getElementById("soundWrite");
+const bgMusic = document.getElementById("bgMusic");
+
+let typing = false;
+
+
+const pages = [
+"И предан он был, и да ожил он когда час пришел и владыка позвал... Преисполненный благословением, ведом высшей волей, некогда мертвый отныне живет, первый среди избранных! Неумолимый лорд из кости, металла и тьмы, в прошлом лишь вождь народа без имени, пришел он со склонов заснеженных в мытарствах и с надеждой мир обрести, но предан был, убит... Своими же братьями убит! Ненависть, разочарование и скорбь были столь сильны в нем, что дух его крепкий остался в миром проклятом, блуждал и метался не зная цели, пока не наткнулся на голос великий, то был Владыка, сам бог не иначе! Просил он не много, лишь верность и душу, за право ступать средь живых, и принял он вызов вернуться назад, принявший новое имя и лик... ",
+"Они кричали, они бежали, но он не ведал усталости, ни боли, ни страха, и даже есть не хотелось... Лишь вперед он ступал, и живых убивал. Тело за телом настиг он всех кто предал, то была жертва, его первая жертва Владыке. Первая, из множества тех что последуют годами вперед...",
+"Моргетар! Моргетар! Молились ему как духу войны, как блуждающей тени в пожухлых лесах земель забытых. То были Хутьярги, достойные жить под взором его, кровью и боем заслужившие право на жизнь и мудрость воителя оного. ",
+"Ведом лишь волей владыки, указ стал ясен как день, Хутьяринги станут орудием праведным с ним во главе, все кланы сойдутся в один под вечным ночи покровом, багровая тьма окутает земли и торжество смерти овладеет умами, он вознесется на грудах костей и плоти, Владыке обещанный дар принеся!",
+"И пусть живые трепещут, ведь Моргетар вновь пробужден, он рыщет, он внемлет, и гроздья гнева снуются вокруг, Хутьяринги знамена поднимут под ликом нежити-лорда, грядет черный поход во славу Темного Бога!",
+" Моргетар: Верные, просветленные, одухотворенные - братья! Всего за десятилетие бойни, какие-то несколько ходов маятника часов мы собрали жертву для Белиара которая станет легендарной! И пусть просвещение во время столетий моего пребывания в виде духа мне принесло голос истинного просвещения, и все же это было послание Темного Бога! Именно он указал мне путь к свободе и истинному величию, и что это за путь? Какой смысл и цель того, что мы блуждаем по этим мертвым землям? Нет его, нет смысла, но есть цель! Мы убиваем,это одухотворенная жестокость, все эти земли погрузятся во тьму! Через каких-то несколько мгновений все наши враги падут! Невинные, виновные, слабые и сильные, честные и бесчестные - все! Они будут кричать, они будут гореть абсолютно бесцельно только чтобы угодить Белиару который будет упиваться их страданиями! Этот страх, эта цель и этот долг объединит нас! И наконец - Освободи-и-ит! Слава Темному Богу!"
+];
+
+let page = -1;
+
+function nextPage(){
+
+const scroll = document.getElementById("scroll");
+const paper = document.getElementById("paper");
+const text = document.getElementById("text");
+
+/* щелбан */
+scroll.classList.remove("jiggle");
+scroll.classList.add("active");
+
+setTimeout(()=>{
+    scroll.classList.remove("active");
+},600);
+void scroll.offsetWidth;
+scroll.classList.add("jiggle");
+
+/* открыть */
+if(page === -1){
+
+soundOpen.currentTime = 0;
+soundOpen.play();
+
+bgMusic.volume = 0.25;
+bgMusic.play();
+
+scroll.classList.add("reading");
+
+document.getElementById("lore").classList.add("show");
+document.getElementById("loreText").classList.add("show");
+document.querySelector(".lore-image").classList.add("show");
+}
+
+/* смена страницы */
+page++;
+
+if(page > 0){
+soundPage.currentTime = 0;
+soundPage.play();
+}
+
+if(page >= pages.length){
+    paper.classList.remove("open");
+    page = -1;
+    return;
+}
+
+text.classList.remove("show");
+
+setTimeout(()=>{
+    typeInk(pages[page]);
+},300);
+
+}
+
+function typeInk(content){
+
+const text = document.getElementById("loreText");
+
+typing = false; // стоп предыдущего
+text.innerHTML = "";
+
+setTimeout(()=>{
+typing = true;
+
+soundWrite.currentTime = 0;
+soundWrite.play();
+
+
+let i = 0;
+
+function addLetter(){
+
+    if(!typing) return;
+
+    if(i >= content.length){
+        typing = false;
+        return;
+    }
+
+    const span = document.createElement("span");
+    span.innerHTML = content[i];
+
+    span.style.opacity = 0;
+    span.style.filter = "blur(4px)";
+    span.style.transition = "all 0.4s ease";
+
+    text.appendChild(span);
+
+    setTimeout(()=>{
+        span.style.opacity = 1;
+        span.style.filter = "blur(0px)";
+    },50);
+
+    i++;
+    setTimeout(addLetter, 30);
+}
+
+addLetter();
+
+},50);
+}
+
+
+</script>
+
+
+</body>
+</html>
+
